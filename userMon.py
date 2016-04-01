@@ -1,38 +1,15 @@
-import os
-import threading
+import psutil
+import time
 
-groups = ["Users",
-          "Enterprise Admins",
-          "Scheme Admins",
-          "Domain Admins",
-          "DHCP Admins",
-          "WSS_Admin_WPG",
-          "WSS_Restricted_WPG",
-          "WSS_WPG",
-          "Administrators"]
+current = []
+print "Current Users:"
+for user in psutil.users():
+    current.append(user.name)
+    print "\t"+user.name
 
-data = {}
-
-def init():
-    print "Monitoring Users . . . "
-    for group in groups:
-        result = os.popen('dsquery group -name "'+group+'" | dsget group -members -expand').read()
-        data.update({group:result})
-
-def check():
-    global groups
-    global data
-    for group in groups:
-        result = os.popen('dsquery group -name "'+group+'" | dsget group -members -expand').read()
-        if result != data[group]:
-            result = result.split("\n")
-            temp = data[group].split("\n")
-            for user in result:
-                if user not in temp:
-                    print "\nNew User:\n{} in {}\n".format(user,group)
-            data[group]="\n".join(result)
-    threading.Timer(5,check).start()
-
-if __name__ == "__main__":
-    init()
-    check()
+print "\nNow Monitoring. . ."
+while True:
+    time.sleep(5)
+    for user in psutil.users():
+        if user.name not in current:
+            print "New User '{}' Detected".format(user.name)
